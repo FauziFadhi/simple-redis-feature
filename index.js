@@ -38,6 +38,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 exports.__esModule = true;
 var ioredis_1 = require("ioredis");
 var express = require('express');
+var bodyParser = require('body-parser');
 var redisClient = new ioredis_1["default"]({
     host: 'localhost',
     password: 'chelsea24'
@@ -55,6 +56,22 @@ function scorePlayerUpdate(userId, score) {
         });
     });
 }
+function getRange(_a) {
+    var point1 = _a[0], point2 = _a[1];
+    return __awaiter(this, void 0, void 0, function () {
+        return __generator(this, function (_b) {
+            switch (_b.label) {
+                case 0: return [4 /*yield*/, redisClient.geoadd('locations', point1.longitude, point1.latitude, point1.name)];
+                case 1:
+                    _b.sent();
+                    return [4 /*yield*/, redisClient.geoadd('locations', point2.longitude, point2.latitude, point2.name)];
+                case 2:
+                    _b.sent();
+                    return [2 /*return*/, redisClient.geodist('locations', point1.name, point2.name, "km")];
+            }
+        });
+    });
+}
 function getBoard() {
     return __awaiter(this, void 0, void 0, function () {
         var cachedLeaderboard, leaderboard, i;
@@ -66,12 +83,10 @@ function getBoard() {
                     if (cachedLeaderboard.length <= 0) {
                         return [2 /*return*/, []];
                     }
-                    console.log(cachedLeaderboard);
                     leaderboard = [];
                     for (i = 0; i < cachedLeaderboard.length; i += 2) {
                         leaderboard.push({ playerId: cachedLeaderboard[i], score: parseInt(cachedLeaderboard[i + 1]) });
                     }
-                    console.log(leaderboard);
                     return [2 /*return*/, leaderboard];
             }
         });
@@ -79,6 +94,8 @@ function getBoard() {
 }
 var app = express();
 var port = 3000;
+// parse application/json
+app.use(bodyParser.json());
 app.get('/', function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
     var _a, userId, score, _b, _c;
     return __generator(this, function (_d) {
@@ -91,6 +108,21 @@ app.get('/', function (req, res) { return __awaiter(void 0, void 0, void 0, func
                 _c = (_b = res).send;
                 return [4 /*yield*/, getBoard()];
             case 2:
+                _c.apply(_b, [_d.sent()]);
+                return [2 /*return*/];
+        }
+    });
+}); });
+app.post('/range', function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
+    var _a, point1, point2, _b, _c;
+    return __generator(this, function (_d) {
+        switch (_d.label) {
+            case 0:
+                console.log(req.body);
+                _a = req.body, point1 = _a.point1, point2 = _a.point2;
+                _c = (_b = res).send;
+                return [4 /*yield*/, getRange([point1, point2])];
+            case 1:
                 _c.apply(_b, [_d.sent()]);
                 return [2 /*return*/];
         }
